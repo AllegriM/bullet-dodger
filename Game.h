@@ -24,12 +24,16 @@ private:
     void initPlayer();
     void initBullet();
     void initBackground();
+    void initFont();
 
     // Game objects //
     Player *player;
-    Bullet *bullet;
+    Bullet *bulletData;
     sf::Sprite background;
     sf::Texture backgroundTexture;
+    sf::Text livesText;
+    sf::Font font;
+    int lives;
 
 public:
     Game();
@@ -48,7 +52,7 @@ public:
     void render();
 };
 
-Game::Game()
+Game::Game() : lives(3)
 {
     this->initVariables();
     this->initWindow();
@@ -76,6 +80,19 @@ void Game::initWindow()
     this->window->setFramerateLimit(60);
 }
 
+void Game::initFont()
+{
+    if (!this->font.loadFromFile("assets/dogica.ttf"))
+    {
+        std::cout << "ERROR::GAME::COULD_NOT_LOAD_FONT" << std::endl;
+    }
+    this->livesText.setFont(this->font);
+    this->livesText.setCharacterSize(24);
+    this->livesText.setFillColor(sf::Color::White);
+    this->livesText.setPosition(10.f, 10.f);
+    this->livesText.setString("Lives: " + std::to_string(this->lives));
+}
+
 void Game::initPlayer()
 {
     this->player = new Player();
@@ -83,7 +100,7 @@ void Game::initPlayer()
 
 void Game::initBullet()
 {
-    this->bullet = new Bullet();
+    this->bulletData = new Bullet();
 }
 
 void Game::initBackground()
@@ -126,26 +143,26 @@ const bool Game::running() const
 
 void Game::checkCollision()
 {
-
-    for (int i = 0; i < this->bullet->bullets.size(); i++)
+    for (int i = 0; i < this->bulletData->getBullets().size(); i++)
     {
-        if (this->player->getPlayer().intersects(this->bullet->bullets[i].bullet.getGlobalBounds()))
+        if (this->player->getPlayer().intersects(this->bulletData->getBullets()[i].getBullet().getGlobalBounds()))
         {
-            std::cout << "COLLISION" << std::endl;
+            this->lives--;
+            this->livesText.setString("Lives: " + std::to_string(this->lives));
         }
     }
 }
 
 void Game::updateBullets()
 {
-    this->bullet->update(*this->window);
+    this->bulletData->update(*this->window);
 }
 
 void Game::update()
 {
     this->pollEvents();
 
-    this->player->movement(this->window);
+    this->player->update(this->window);
 
     this->updateBullets();
 
@@ -156,7 +173,7 @@ void Game::update()
 
 void Game::renderBullets()
 {
-    this->bullet->render(*this->window);
+    this->bulletData->render(*this->window);
 }
 
 void Game::render()
@@ -171,6 +188,7 @@ void Game::render()
 
     this->renderBullets();
 
+    window->draw(this->livesText);
     // Render new frame
     this->window->display();
 }

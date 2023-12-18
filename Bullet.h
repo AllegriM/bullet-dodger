@@ -4,80 +4,87 @@
 
 #include <iostream>
 
-struct BulletInfo
-{
-    sf::Sprite bullet;
-    float bulletVelocity;
-};
-
 class Bullet
 {
 private:
     /* data */
-    sf::Sprite bullet;
+    sf::Sprite bulletSprite;
+    float bulletVelocity;
     sf::Texture bulletTexture;
+    sf::FloatRect bulletRectangle;
+    std::vector<Bullet> bullets;
 
     float bulletSpawnTimer, bulletSpawnTimerMax;
     int maxBullets;
-    int ground_start = 65;
+    int ground_start, offset_x, offset_y;
 
 public:
     Bullet();
     ~Bullet();
 
-    std::vector<BulletInfo> bullets;
-    // void initBullets();
+    sf::Sprite getBullet();
+    std::vector<Bullet> getBullets();
     void spawnBullet(sf::RenderWindow &window);
     void update(sf::RenderWindow &window);
     void render(sf::RenderWindow &window);
 };
 
-Bullet::Bullet() : bulletSpawnTimer(0.f), bulletSpawnTimerMax(10.f), maxBullets(4)
-{
-    if (this->bulletTexture.loadFromFile("assets/bomb.png"))
-    {
-        this->bullet.setTexture(this->bulletTexture);
-    }
-    else
-    {
-        std::cout << "ERROR::BULLET::COULD_NOT_LOAD_SKIN" << std::endl;
-    }
-}
+Bullet::Bullet() : bulletSpawnTimer(0.f), bulletSpawnTimerMax(10.f), maxBullets(3),
+                   ground_start(65), offset_x(112), offset_y(100) {}
 
 Bullet::~Bullet()
 {
 }
 
+std::vector<Bullet> Bullet::getBullets()
+{
+    return this->bullets;
+}
+
+sf::Sprite Bullet::getBullet()
+{
+    return this->bulletSprite;
+}
+
 void Bullet::spawnBullet(sf::RenderWindow &window)
 {
-    BulletInfo bulletInfo;
+    Bullet newBullet;
 
-    bulletInfo.bullet.setTexture(this->bulletTexture);
-    bulletInfo.bullet.setScale(0.1f, 0.1f);
-    bulletInfo.bullet.setPosition(
-        0.f - bulletInfo.bullet.getGlobalBounds().width,
-        static_cast<float>(rand() % static_cast<int>((window.getSize().y - ground_start) - bulletInfo.bullet.getGlobalBounds().height)));
+    if (this->bulletTexture.loadFromFile("assets/bomb.png"))
+    {
+        newBullet.bulletSprite.setTexture(this->bulletTexture);
+    }
+    else
+    {
+        std::cout << "ERROR::BULLET::COULD_NOT_LOAD_SKIN" << std::endl;
+    }
+
+    newBullet.bulletSprite.setScale(0.1f, 0.1f);
+    newBullet.bulletSprite.setPosition(
+        0.f - newBullet.bulletSprite.getGlobalBounds().width / 2,
+        static_cast<float>(rand() % static_cast<int>((window.getSize().y - ground_start) - newBullet.bulletSprite.getGlobalBounds().height)));
 
     int bulletType = rand() % 3;
 
     switch (bulletType)
     {
     case 0:
-        bulletInfo.bulletVelocity = 3.f;
+        newBullet.bulletVelocity = 3.f;
         break;
     case 1:
-        bulletInfo.bulletVelocity = 4.f;
+        newBullet.bulletVelocity = 4.f;
         break;
     case 2:
-        bulletInfo.bulletVelocity = 5.f;
+        newBullet.bulletVelocity = 5.f;
         break;
     default:
-        bulletInfo.bulletVelocity = 4.f;
+        newBullet.bulletVelocity = 4.f;
         break;
     }
 
-    bulletInfo.bullet.move(bulletInfo.bulletVelocity, 0.f);
-    this->bullets.push_back(bulletInfo);
+    newBullet.bulletSprite.move(newBullet.bulletVelocity, 0.f);
+
+    this->bullets.push_back(newBullet);
 }
 
 void Bullet::update(sf::RenderWindow &window)
@@ -98,8 +105,9 @@ void Bullet::update(sf::RenderWindow &window)
 
     for (int i = 0; i < this->bullets.size(); i++)
     {
-        this->bullets[i].bullet.move(this->bullets[i].bulletVelocity, 0.f);
-        if (this->bullets[i].bullet.getPosition().x > window.getSize().x)
+        this->bullets[i].bulletSprite.move(this->bullets[i].bulletVelocity, 0.f);
+
+        if (this->bullets[i].bulletSprite.getPosition().x > window.getSize().x)
         {
             this->bullets.erase(this->bullets.begin() + i);
         }
@@ -110,6 +118,6 @@ void Bullet::render(sf::RenderWindow &window)
 {
     for (auto &e : this->bullets)
     {
-        window.draw(e.bullet);
+        window.draw(e.bulletSprite);
     }
 }
